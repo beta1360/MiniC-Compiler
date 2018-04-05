@@ -2,7 +2,7 @@
 /* Compiler lecture's report code.
  * The code is suggested by professor but will make changes later.
 */
-
+/*
 #include <stdio.h>
 #include <iostream.h>
 #include <fstream.h>
