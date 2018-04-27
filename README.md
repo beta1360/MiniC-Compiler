@@ -5,4 +5,4 @@
 ## Index
 
 1. Ucode interpreter
-2. Finite automata (~continue)
+2. Lexical Analyzer(~continue)
