@@ -16,3 +16,5 @@ LexicalAnalyzer.exe <file_name>
 
 - Apply test case:pal.mc -> output;below cature screenshot
 - If you want to input other test case, please refer 
+
+<img src="https://github.com/KeonHeeLee/study-compiler/blob/master/lexical-analyzer/image/01.PNG">
