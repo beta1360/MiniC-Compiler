@@ -10,37 +10,37 @@
 
 enum tsymbol {
 	tnull = -1,
-	tnot,	tnotequ,	tmod,		tmodAssign,	tident,		tnumber,
-	/* 0	1			2			3			4			5		*/	
-	tand,	tlparen,	trparen,	tmul,		tmulAssign,	tplus,
-	/* 6	7			8			9			10			11		*/
-	tinc,	taddAssign,	tcomma,		tminus,		tdec,		tsubAssign,
-	/* 12	13			14			15			16			17		*/
-	tdiv,	tdivAssign,	tsemicolon,	tless,		tlesse,		tassign,
-	/* 18	19			20			21			22			23		*/
-	tequal,	tgreat,		tgreate,	tlbracket,	trbracket,	teof,
-	/* 24	25			26			27			28			29		*/
-	tconst,	telse,		tif,		tint,		treturn,	tvoid,
-	/* 30	31			32			33			34			35		*/
-	twhile,	tlbrace,	tor,		trbrace
-	/* 36	37			38			39		*/
+	tnot, tnotequ, tmod, tmodAssign, tident, tnumber,
+	/* 0	1		2		3			4		5	*/
+	tand, tlparen, trparen, tmul, tmulAssign, tplus,
+	/* 6	7		8		 9		10		  11	*/
+	tinc, taddAssign, tcomma, tminus, tdec, tsubAssign,
+	/* 12	13			14		15		16		17	*/
+	tdiv, tdivAssign, tsemicolon, tless, tlesse, tassign,
+	/* 18	19			20			21		22		23	*/
+	tequal, tgreat, tgreate, tlbracket, trbracket, teof,
+	/* 24	25			26		27		  28		29	*/
+	tconst, telse, tif, tint, treturn, tvoid,
+	/* 30	31		32	 33		34		35	*/
+	twhile, tlbrace, tor, trbrace
+	/* 36	37		 38		 39	*/
 };
 
 char* symbol_token[] = {
-	"!",		"!=",		"%",	"%=",	NULL,		NULL,
-	/*0			1			2		3		4			5	*/
-	"&&",		"(",		")",	"*",	"*=",		"+",
-	/*6			7			8		9		10			11	*/
-	"++",		"+=",		",",	"-",	"--",		"-=",
-	/*12		13			14		15		16			17	*/
-	"/",		"/=",		";",	"<",	"<=",		"=",
-	/*18		19			20		21		22			23	*/
-	"==",		">",		">=",	"[",	"]",		"",
-	/*24		25			26		27		28			29	*/
-	"const",	"else",		"if",	"int",	"return",	"void",
-	/*30		31			32		33		34			35	*/
-	"while",	"{",		"||",	")",	NULL
-	/*36		37			38		39		40(checking error)*/
+	"!", "!=", "%", "%=", NULL, NULL,
+	/*0	  1	   2	 3	   4	 5	*/
+	"&&", "(", ")", "*", "*=", "+",
+	/*6	   7	8	 9	  10	11	*/
+	"++", "+=", ",", "-", "--", "-=",
+	/*12   13	14	 15   16	17	*/
+	"/", "/=", ";", "<", "<=", "=",
+	/*18   19	20	 21	  22    23	*/
+	"==", ">", ">=", "[", "]", "",
+	/*24   25	26	 27	  28	29	*/
+	"const", "else", "if", "int", "return", "void",
+	/*30		31	  32	 33		34		 35	*/
+	"while", "{", "||", ")"
+	/*36	  37   38	 39*/
 };
 
 struct tokenType {
@@ -62,7 +62,7 @@ enum tsymbol tnum[NO_KEYWORDS] = {
 void lexicalError(int n){
 	printf(" *** Lexical Error : ");
 	switch (n) {
-	case 1: 
+	case 1:
 		printf("an identifier length must be less than 12\n");
 		break;
 	case 2:
@@ -88,8 +88,8 @@ int superLetterOrDigit(char ch){
 }
 
 /*
-	- Reference : http://www.hackerschool.org/HS_Boards/view.php?id=QNA_programming&no=2983 
-	- Modified by KeonHeeLee
+- Reference : http://www.hackerschool.org/HS_Boards/view.php?id=QNA_programming&no=2983
+- Modified by KeonHeeLee
 */
 int getIntNum(char firstCharacter) {
 	int num = 0;
@@ -145,10 +145,10 @@ struct tokenType scanner(){
 			case '/':	//state 10
 				ch = getchar();
 				if (ch == '*')	// text comment
-					do {
-						while (ch != '*') ch = getchar();
-						ch = getchar();
-					} while (ch != '/');
+				do {
+					while (ch != '*') ch = getchar();
+					ch = getchar();
+				} while (ch != '/');
 				else if (ch == '/')	{// line comment
 					while (getchar() != '\n');
 				}
@@ -256,7 +256,7 @@ struct tokenType scanner(){
 						 break;
 			}
 		} // switch end
-	} while (token.number == tnull); 
+	} while (token.number == tnull);
 	return token;
 } // end of scanner
 
@@ -265,8 +265,8 @@ int main(int argc, char *argv[]){
 		printf("Error: Must have two parameters.\n");
 		printf("Usage: LexicalAnalyzer <file_name>\n");
 		return -1;
-	} 
-	
+	}
+
 	if (freopen(argv[1], "rb", stdin) == NULL){
 		printf("Error: Invalid file path.\n");
 		return -1;
@@ -275,14 +275,13 @@ int main(int argc, char *argv[]){
 	struct tokenType token = scanner();
 
 	while (token.number != teof) {
-
 		if (token.number == tident) // if it is identifier
-			printf("%-10s %-10d %s\n", token.value.id, token.number, token.value.id);
+			printf("%-11s %-11d %s\n", token.value.id, token.number, token.value.id);
 		else if (token.number == tnumber)  // If it is number
-			printf("%-10d %-10d %d\n", token.value.num, token.number, token.value.num);
+			printf("%-11d %-11d %d\n", token.value.num, token.number, token.value.num);
 		else // another token
-			printf("%-10s %-10d %d\n", symbol_token[token.number], token.number, token.value.num);
-			
+			printf("%-11s %-11d %d\n", symbol_token[token.number], token.number, token.value.num);
+
 		token = scanner();
 	}
 
