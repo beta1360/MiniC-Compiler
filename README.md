@@ -5,4 +5,5 @@
 ## Index
 
 1. Ucode interpreter
-2. Lexical Analyzer(~continue)
+2. Lexical Analyzer
+3. Parser (~ continue)
