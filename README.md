@@ -6,4 +6,4 @@
 
 1. Ucode interpreter
 2. Lexical Analyzer
-3. Parser (~ continue)
+3. Parser
