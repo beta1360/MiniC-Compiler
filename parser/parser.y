@@ -8,10 +8,17 @@
     char* string;
 }
 
-%token tconst telse tif tint treturn tvoid twhile tequal
-	tnotequ tlesse tgreate tand tor tinc tdec taddAssign
-	tsubAssign tmulAssign tdivAssign tmodAssign tfor
+%token tconst telse tif tint treturn tvoid twhile
+	tand tor taddAssign tsubAssign tmulAssign 
+    tdivAssign tmodAssign tfor
     tswitch tcase tdefault tbreak tcontinue
+
+%nonassoc TIFX
+%left tgreate tlesse tequal tnotequ '>' '<'
+%left '+' '-'
+%left '*' '/'
+%left tinc tdec
+%nonassoc uminus
 
 %token <string> tident tnumber
 %type <node> translation_unit external_dcl function_def function_header dcl_spec dcl_specifiers
@@ -78,7 +85,7 @@ condition_st     : if_st                                    {$$ = $1;}
 flow_st          : return_st                                {$$ = $1;}
 	             | continue_st                              {$$ = $1;}
 	             | break_st                                 {$$ = $1;};
-if_st            : tif '(' expression ')' statement         {appendNext($3, $5); $$ = buildTree(IF_ST, $3);}
+if_st            : tif '(' expression ')' statement %prec TIFX {appendNext($3, $5); $$ = buildTree(IF_ST, $3);}
                  | tif '(' expression ')' statement telse statement  {appendNext($3, $5); appendNext($5, $7); $$ = buildTree(IF_ELSE_ST, $3);};
 while_st         : twhile '(' expression ')' statement      {appendNext($3, $5); $$ = buildTree(WHILE_ST, $3);};
 return_st        : treturn opt_expression ';'               {$$ = buildTree(RETURN_ST, $2);};
@@ -88,6 +95,7 @@ for_dcl          : for_dcl_list                             {$$ = buildTree(FOR_
 for_dcl_list     : for_dcl_list ',' assignment_exp          {appendNext($1, $3);$$ = $1;}
 	             | assignment_exp                           {$$ = $1;};
 for_exp          : logical_or_exp                           {$$ = buildTree(FOR_EXP, $1);}
+                 | logical_and_exp                          {$$ = buildTree(FOR_EXP, $1);}
 	             |                                          {$$ = buildTree(FOR_EXP, NULL); };
 for_inc          : for_inc_list                             {$$ = buildTree(FOR_INC, $1);}
 	             |                                          { $$ = buildTree(FOR_INC,NULL); };
