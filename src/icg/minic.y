@@ -16,14 +16,14 @@
 }
 
 %token tconst telse tif tint treturn tvoid twhile
-	tand tor taddAssign tsubAssign tmulAssign 
-    tdivAssign tmodAssign tfor
-    tswitch tcase tdefault tbreak tcontinue
+%token tand tor taddAssign tsubAssign tmulAssign 
+%token tdivAssign tmodAssign tfor
+%token tswitch tcase tdefault tbreak tcontinue
 
 %nonassoc TIFX
 %left tgreate tlesse tequal tnotequ '>' '<'
 %left '+' '-'
-%left '*' '/'
+%left '*' '/' '%'
 %left tinc tdec
 %nonassoc uminus
 
@@ -144,7 +144,7 @@ additive_exp     : multiplicative_exp                       {$$ = $1;}
 multiplicative_exp : unary_exp                              {$$ = $1;}
                    | multiplicative_exp '*' unary_exp       {appendNext($1, $3); $$ = buildTree(MUL, $1);}
                    | multiplicative_exp '/' unary_exp       {appendNext($1, $3); $$ = buildTree(DIV, $1);}
-                   | multiplicative_exp '%' unary_exp       {appendNext($1, $3); $$ = buildTree(MOD, $1);};
+                   | multiplicative_exp '%' unary_exp       {appendNext($1, $3); $$ = buildTree(REMAINDER, $1);};
 unary_exp          : postfix_exp                            {$$ = $1;}
                    | '-' unary_exp                          {$$ = buildTree(UNARY_MINUS, $2);}
                    | '!' unary_exp                          {$$ = buildTree(LOGICAL_NOT, $2);}
@@ -176,16 +176,16 @@ Node* parse(FILE *mcFile)
 }
 
 int main(int argc, char *argv[]) {
-	Node *root;
-	FILE *inFile;
-	FILE *astFile;
+    Node *root;
+    FILE *inFile;
+    FILE *astFile;
     FILE *ucoFile;
 	
-	if((inFile = fopen(argv[1], "r")) == NULL){
+    if((inFile = fopen(argv[1], "r")) == NULL){
         printf("File path error: Invalid file path(%s).\n",argv[1]);
         return -1;
     }
-	if((astFile = fopen(strcat(strtok(argv[1], "."), ".ast"), "w"))==NULL){
+    if((astFile = fopen(strcat(strtok(argv[1], "."), ".ast"), "w"))==NULL){
         printf("Making ast file error: Don\'t make ast file.\n");
         return -1;
     }
@@ -194,13 +194,13 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 	
-	root = parse(inFile);
-	printTree(root, 0, astFile);
+    root = parse(inFile);
+    printTree(root, 0, astFile);
     codeGen(root, ucoFile);
 	    
-	fclose(inFile);
-	fclose(astFile);
+    fclose(inFile);
+    fclose(astFile);
     fclose(ucoFile);
-	
-	return 0;
+    
+    return 0;
 }
