@@ -32,3 +32,20 @@ $ ./minic <Mini-C file(.mc)>
 ```bash
 $ ./ucodei <ICG file(.uco)>
 ```
+
+## Demo Snapshots
+
+1. **[Palindrome](./test/pal.mc) (pal.mc)**
+<img src="./image/05.png">
+
+2. **[Bubble Sort](./test/bubble.mc) (bubble.mc)**
+<img src="./image/01.png">
+
+3. **[Factorial](./test/factorial.mc) (factorial.mc)**
+<img src="./image/02.png">
+
+4. **[Select number](./test/select.mc) (select.mc)**
+<img src="./image/03.png">
+
+5. **[Selection Sort](./test/selection_sort.mc) (selection_sort.mc)**
+<img src="./image/04.png">
