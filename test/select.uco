@@ -1,0 +1,61 @@
+main       proc    2       2       2
+           sym     2       1       1
+           sym     2       2       1
+           ldp
+           lda     2       1
+           call    read
+           ldc     0
+           str     2       2
+           lod     2       1
+           ldc     1
+           eq
+           tjp     $$1
+           ujp     $$2
+$$1        nop
+           lod     2       1
+           ldc     1
+           add
+           str     2       2
+           ujp     $$0
+$$2        nop
+           lod     2       1
+           ldc     2
+           eq
+           tjp     $$3
+           ujp     $$4
+$$3        nop
+           lod     2       1
+           ldc     2
+           sub
+           str     2       2
+           ujp     $$0
+$$4        nop
+           lod     2       1
+           ldc     3
+           eq
+           tjp     $$5
+           ujp     $$6
+$$5        nop
+           lod     2       1
+           ldc     2
+           mult
+           str     2       2
+           ujp     $$0
+$$6        nop
+           ujp     $$7
+           ujp     $$8
+$$7        nop
+           ldc     10
+           str     2       2
+           ujp     $$0
+$$8        nop
+$$0        nop
+           ldp
+           lod     2       2
+           call    write
+           ret
+           end
+           bgn     0
+           ldp
+           call    main
+           end
