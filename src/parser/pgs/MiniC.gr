@@ -1,0 +1,111 @@
+DIRECTIVE       BUILD_TREES -> ON;
+                LIST_STATES -> ON;
+                
+LEXICON         '%ident'  => IDENT;
+                '%number' => NUMBER;
+
+SYNTAX mini_c
+
+mini_c           -> translation_unit                       => PROGRAM;
+translation_unit -> external_dcl;
+                 -> translation_unit external_dcl;
+external_dcl     -> function_def;
+                 -> declaration;
+
+function_def     -> function_header compound_st            => FUNC_DEF;
+function_header  -> dcl_spec function_name formal_param    => FUNC_HEAD;
+dcl_spec         -> dcl_specifiers                         => DCL_SPEC;
+dcl_specifiers   -> dcl_specifier;
+                 -> dcl_specifiers dcl_specifier;
+dcl_specifier    -> type_qualifier;
+                 -> type_specifier;
+type_qualifier   -> 'const'                                => CONST_TYPE;
+type_specifier   -> 'int'                                  => INT_TYPE;
+                 -> 'void'                                 => VOID_TYPE;
+function_name    -> '%ident';
+formal_param     -> '(' opt_formal_param ')'               => FORMAL_PARA;
+opt_formal_param -> formal_param_list;
+                 -> ;
+formal_param_list-> param_dcl;
+                 -> formal_param_list ',' param_dcl;
+param_dcl        -> dcl_spec declarator                    => PARAM_DCL;
+
+compound_st      -> '{' opt_dcl_list opt_stat_list '}'     => COMPOUND_ST;
+opt_dcl_list     -> declaration_list                       => DCL_LIST;
+                 ->                                        => DCL_LIST;
+declaration_list -> declaration;
+                 -> declaration_list declaration;
+declaration      -> dcl_spec init_dcl_list ';'             => DCL;
+init_dcl_list    -> init_declarator;
+                 -> init_dcl_list ',' init_declarator;
+init_declarator  -> declarator                             => DCL_ITEM;
+                 -> declarator '=' '%number'               => DCL_ITEM;
+declarator       -> '%ident'                               => SIMPLE_VAR;
+                 -> '%ident' '[' opt_number ']'            => ARRAY_VAR;
+opt_number       -> '%number';
+                 -> ;
+                 
+opt_stat_list    -> statement_list                         => STAT_LIST;
+                 -> ;
+statement_list   -> statement;
+                 -> statement_list statement;
+statement        -> compound_st;
+                 -> expression_st;
+                 -> if_st;
+                 -> while_st;
+                 -> return_st;
+
+expression_st    -> opt_expression ';'                     => EXP_ST;
+opt_expression   -> expression;
+                 -> ;
+if_st            -> 'if' '(' expression ')' statement      => IF_ST;
+                 -> 'if' '(' expression ')' statement
+                    'else' statement                       => IF_ELSE_ST;
+while_st         -> 'while' '(' expression ')' statement   => WHILE_ST;
+return_st        -> 'return' opt_expression ';'            => RETURN_ST;
+
+expression       -> assignment_exp;
+assignment_exp   -> logical_or_exp;
+                 -> unary_exp '=' assignment_exp           => ASSIGN_OP;
+                 -> unary_exp '+=' assignment_exp          => ADD_ASSIGN;
+                 -> unary_exp '-=' assignment_exp          => SUB_ASSIGN;
+                 -> unary_exp '*=' assignment_exp          => MUL_ASSIGN;
+                 -> unary_exp '/=' assignment_exp          => DIV_ASSIGN;
+                 -> unary_exp '%=' assignment_exp          => MOD_ASSIGN;
+logical_or_exp   -> logical_and_exp;
+                 -> logical_or_exp '||' logical_and_exp    => LOGICAL_OR;
+logical_and_exp  -> equality_exp;
+                 -> logical_and_exp '&&' equality_exp      => LOGICAL_AND;
+equality_exp     -> relational_exp;
+                 -> equality_exp '==' relational_exp       => EQ;
+                 -> equality_exp '!=' relational_exp       => NE;
+relational_exp   -> additive_exp;
+                 -> relational_exp '>' additive_exp        => GT;
+                 -> relational_exp '<' additive_exp        => LT;
+                 -> relational_exp '>=' additive_exp       => GE;
+                 -> relational_exp '<=' additive_exp       => LE;
+additive_exp     -> multiplicative_exp;
+                 -> additive_exp '+' multiplicative_exp    => ADD;
+                 -> additive_exp '-' multiplicative_exp    => SUB;
+multiplicative_exp -> unary_exp;
+                   -> multiplicative_exp '*' unary_exp     => MUL;
+                   -> multiplicative_exp '/' unary_exp     => DIV;
+                   -> multiplicative_exp '%' unary_exp     => REMAINDER;
+unary_exp          -> postfix_exp;
+                   -> '-' unary_exp                        => UNARY_MINUS;
+                   -> '!' unary_exp                        => LOGICAL_NOT;
+                   -> '++' unary_exp                       => PRE_INC;
+                   -> '--' unary_exp                       => PRE_DEC;
+postfix_exp        -> primary_exp;
+                   -> postfix_exp '[' expression ']'       => INDEX;
+                   -> postfix_exp '(' opt_actual_param ')' => CALL;
+                   -> postfix_exp '++'                     => POST_INC;
+                   -> postfix_exp '--'                     => POST_DEC;
+opt_actual_param   -> actual_param;
+                   -> ;
+actual_param       -> actual_param_list                    => ACTUAL_PARAM;
+actual_param_list  -> assignment_exp;
+                   -> actual_param_list ',' assignment_exp;
+primary_exp        -> '%ident';
+                   -> '%number';
+                   -> '(' expression ')';                  
