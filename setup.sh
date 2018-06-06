@@ -1,5 +1,5 @@
 echo -e "\033[0;34mMade by \033[1;36mKeonHeeLee] \033[1;34m(Thursday, 7 June 2018)"
-echo -e "\033[0;34m- Github : \033[1;36mhttps://github.com/KeonHeeLee/study-compiler"
+echo -e "\033[0;34m- Github : \033[1;36mhttps://github.com/KeonHeeLee/MiniC-Compiler"
 echo -e "\033[0;34m- E-mail : \033[1;36mbeta1360@naver.com\033[0m"
 echo " "
 
