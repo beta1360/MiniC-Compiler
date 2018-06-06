@@ -17,6 +17,7 @@
 
 ```bash
 $ git clone https://github.com/KeonHeeLee/MiniC-Compiler
+$ cd MiniC-Compiler
 $ sudo chmod +0777 setup.sh
 $ ./setup.sh
 ```
