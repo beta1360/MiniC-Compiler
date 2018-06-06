@@ -25,6 +25,9 @@ $$1        nop
            ldc     0
            ne
            fjp     $$2
+           lod     2       3
+           ldc     10
+           mod
            str     2       4
            lod     2       2
            ldc     10

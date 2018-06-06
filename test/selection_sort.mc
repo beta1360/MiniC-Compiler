@@ -12,7 +12,7 @@ void main()
 
     for (i = 0; i < MAX - 1; ++i)
     {
-        for (j = 1; j < MAX; ++j)
+        for (j = i + 1; j < MAX; ++j)
         {
             if(array[i] > array[j])
             {

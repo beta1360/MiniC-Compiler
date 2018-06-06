@@ -33,7 +33,9 @@ $$2        nop
            sub
            lt
            fjp     $$3
+           lod     2       1
            ldc     1
+           add
            str     2       2
 $$4        nop
            lod     2       2

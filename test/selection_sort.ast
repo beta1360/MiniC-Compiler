@@ -82,7 +82,9 @@ Nonterminal: PROGRAM
                                         Nonterminal: FOR_DCL
                                              Nonterminal: ASSIGN_OP
                                                   Terminal: j
-                                                  Terminal: 1
+                                                  Nonterminal: ADD
+                                                       Terminal: i
+                                                       Terminal: 1
                                         Nonterminal: FOR_EXP
                                              Nonterminal: LT
                                                   Terminal: j

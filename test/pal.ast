@@ -60,7 +60,7 @@ Nonterminal: PROGRAM
                                    Nonterminal: EXP_ST
                                         Nonterminal: ASSIGN_OP
                                              Terminal: j
-                                             Nonterminal: MOD
+                                             Nonterminal: REMAINDER
                                                   Terminal: i
                                                   Terminal: 10
                                    Nonterminal: EXP_ST
