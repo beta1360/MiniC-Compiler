@@ -11,6 +11,17 @@
 4. [Intermediate Language Generator](./src/icg)
 
 
+## Dependency
+
+- flex
+- bison/yacc
+
+## Developing Environment
+
+- OS : Ubuntu 16.04 LTS
+- Language : C & C++
+- Compiler : gcc & g++
+
 ## How to use
 
 **0. Installation**
