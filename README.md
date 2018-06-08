@@ -1,8 +1,8 @@
-# study-compiler
+# MiniC-Compiler
 
-2018 Compiler lecture
+ MiniC Compiler use flex & bison/yacc and C.
 
-## Index
+## The component of Compiler 
 
 1. [Ucode interpreter](./src/ucode)
 2. [Lexical Analyzer](./src/lex)
