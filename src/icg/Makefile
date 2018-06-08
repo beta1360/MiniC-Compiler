@@ -5,8 +5,8 @@ YACC = bison
 
 all : minic
 
-minic: lex.yy.c minic.tab.c parser.c icg.c
-	$(CC) -o $@ $^ $(LIBS)
+minic: lex.yy.c minic.tab.c parser.c icg.c table.c
+	$(CC) -o $@ $^ $(LIBS) -w
 
 minic.tab.c: minic.y
 	$(YACC) -d $^

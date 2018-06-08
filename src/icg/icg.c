@@ -2,123 +2,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "icg.h"
-#include "parser.h"
 
 int lvalue;
-int flag_returned;
-int flag_assigning;
+int returnFlag;
+int assignFlag;
 FILE * file;
 
 SymbolTable* currentTable;
 FlowTable* flowTable;
-
-SymbolTable* makeSymbolTable(SymbolTable *parent, int base) {
-	SymbolTable* table = (SymbolTable *)malloc(sizeof(SymbolTable));
-
-	table->parent = parent;
-	table->offset = 1;
-	table->base   = base;
-	table->count  = 0;
-
-	return table;
-}
-
-SymbolTable* initSymbolTable() {
-	return makeSymbolTable(NULL, 1);
-}
-
-void findSymbol(char *findId, SymbolTable** foundTable, int* findIdx) {
-	if((*foundTable) == NULL) {
-		*findIdx = -1;
-		return;
-	}
-
-	for(int i = 0; i < (*foundTable)->count; i++) {
-		if(strcmp((*foundTable)->symbols[i].id, findId) == 0) {
-			*findIdx = i; 
-			return;
-		}
-	}
-
-	(*foundTable) = (*foundTable)->parent;
-	findSymbol(findId,foundTable, findIdx);
-}
-
-int appendSymbol(SymbolTable *table, Qualifier qual, Specifier spec, char *id, int width, int initialValue) {
-	int symIdx;
-	SymbolTable *findTable = table;
-	findSymbol(id,&findTable,&symIdx);
-	
-	if (findTable == table && symIdx != -1) {
-		fprintf(file,"returned\n");
-		return symIdx;
-	}
-
-	int top = table->count;
-	table->symbols[top].id = id;
-	table->symbols[top].qual = qual;
-	table->symbols[top].spec = spec;
-	table->symbols[top].width = width;
-	table->symbols[top].offset = table->offset;
-	table->symbols[top].initialValue = initialValue;
-	table->count++;
-
-	if(qual != FUNC_QUAL && qual != CONST_QUAL) 
-		table->offset += width;
-	
-	return -1;
-}
-
-FlowTable * initFlowTable() {
-	FlowTable* table = (FlowTable *)malloc(sizeof(FlowTable));
-	table->count = 0;
-	return table;
-}
-
-void findFlow(FlowTable* table,Qualifier qual, char** foundStartLabel, char** foundEndLabel) {
-	for(int i = table->count-1; i >= 0; i--) {
-		if(table->flows[i].qual == qual) {
-			*foundStartLabel = (table->flows[i].startLabel);
-			*foundEndLabel = (table->flows[i].endLabel);
-			return;
-		}	
-	}
-
-	*foundStartLabel = 0;
-	*foundEndLabel = 0;
-}
-
-void topFlow(FlowTable* table, char** foundStartLabel, char** foundEndLabel) {
-	int count = table->count;
-
-	if(count == 0) {
-		*foundStartLabel = 0;
-		*foundEndLabel = 0;
-		return;
-	}
-
-	count--;
-	*foundStartLabel = (table->flows[count].startLabel);
-	*foundEndLabel = (table->flows[count].endLabel);
-}
-
-void pushFlow(FlowTable * table, Qualifier qual, char* startLabel, char* endLabel) {
-	int count = table->count++;
-	table->flows[count].qual = qual;
-	table->flows[count].startLabel = (char *)malloc(sizeof(char) * LABEL_LEN);
-	table->flows[count].endLabel   = (char *)malloc(sizeof(char) * LABEL_LEN);
-    
-	strcpy(table->flows[count].startLabel, startLabel);
-	strcpy(table->flows[count].endLabel, endLabel);
-}
-
-void popFlow(FlowTable * table) {	
-	int count = table->count--;
-	if( count > 0 ) {
-		free(table->flows[count].startLabel);
-		free(table->flows[count].endLabel);
-	}
-}
 
 void emit0(char *opcode){
 	fprintf(file, "           %s\n", opcode);
@@ -157,7 +48,7 @@ void rv_emit(SymbolTable *table, Node *ptr) {
 		emit1("ldc", atoi(ptr->token.value));
 	
 	else {
-		findSymbol(ptr->token.value, &stTable, &stIndex);
+		lookupSymbol(ptr->token.value, &stTable, &stIndex);
 
 		if(stIndex == -1) return;
 
@@ -172,20 +63,20 @@ void rv_emit(SymbolTable *table, Node *ptr) {
 	}
 }
 
-void processSimpleVariable(SymbolTable *table, Node *ptr, Specifier spec, Qualifier qual) {
+void processSimpleVariable(SymbolTable *table, Node *ptr, typeSpecifier spec, typeQualifier qual) {
 	int sign = 1;
 
 	Node *p = ptr->son;
 	Node *q = ptr->brother;
 
 	if(ptr->token.number != SIMPLE_VAR)
-		fprintf(stderr, "error in SIMPLE_VAR\n");
+		printf("error in SIMPLE_VAR\n");
 	
 	if(qual == CONST_QUAL){
 		int init;
 
 		if(q == NULL){
-			fprintf(stderr,"%s must have a constant value\n", ptr->token.value);
+			printf("%s must have a constant value\n", ptr->token.value);
 			return;
 		}
 
@@ -195,13 +86,13 @@ void processSimpleVariable(SymbolTable *table, Node *ptr, Specifier spec, Qualif
 		}
 
 		init = sign * atoi(q->token.value);
-		appendSymbol(table, qual, spec, p->token.value, 0, init);
+		insertSymbol(table, qual, spec, p->token.value, 0, init);
 	}
 	else 
-        appendSymbol(table, qual, spec, p->token.value, 1, 0);
+        insertSymbol(table, qual, spec, p->token.value, 1, 0);
 }
 
-void processArrayVariable(SymbolTable *table, Node *ptr, Specifier spec, Qualifier qual) {
+void processArrayVariable(SymbolTable *table, Node *ptr, typeSpecifier spec, typeQualifier qual) {
 	Node *p = ptr->son;
 	int size;
 
@@ -217,12 +108,12 @@ void processArrayVariable(SymbolTable *table, Node *ptr, Specifier spec, Qualifi
 	else
 		size = atoi(p->brother->token.value);
 
-	appendSymbol(table, qual, spec, p->token.value, size, 0);
+	insertSymbol(table, qual, spec, p->token.value, size, 0);
 }
 
 void processDeclaration(SymbolTable *table, Node *ptr) {
-	Specifier spec;
-	Qualifier qual;
+	typeSpecifier spec;
+	typeQualifier qual;
 	Node *p, *q;
 
 	if(ptr->token.number != DCL_SPEC) {
@@ -270,7 +161,7 @@ void processDeclaration(SymbolTable *table, Node *ptr) {
 }
 
 void processFuncHeader(SymbolTable *table, Node *ptr) {
-	Specifier returnType;
+	typeSpecifier returnType;
 	int noArguments;
 	Node *p;
 
@@ -299,13 +190,13 @@ void processFuncHeader(SymbolTable *table, Node *ptr) {
 		noArguments++;
 		p = p->brother;
 	}
-	appendSymbol(table, FUNC_QUAL, returnType, ptr->son->son->brother->token.value,noArguments,0);
+	insertSymbol(table, FUNC_QUAL, returnType, ptr->son->son->brother->token.value,noArguments,0);
 }
 
 void processFunction(SymbolTable *table, Node *ptr) { 
 	Node *p;
 
-	SymbolTable * newTable = makeSymbolTable(table, table->base+1);
+	SymbolTable * newTable = createSymbolTable(table, table->base+1);
 	//parameter 처리
 	if(ptr->son->son->brother->brother->son) {
 		for(p = ptr->son->son->brother->brother->son; p; p = p->brother) {
@@ -337,7 +228,7 @@ void processFunction(SymbolTable *table, Node *ptr) {
 			processStatement(newTable,p);
 	}
 
-	if(!flag_returned) emit0("ret");
+	if(!returnFlag) emit0("ret");
 	emit0("end");
 
 	free(newTable);
@@ -358,18 +249,18 @@ void processOperator(SymbolTable *table, Node *ptr) {
 			}
 
 			if(rhs->noderep == nonterm) {
-				flag_assigning = 1;
+				assignFlag = 1;
 				processOperator(table, rhs);
-				flag_assigning = 0;
+				assignFlag = 0;
 			}
 			else
 				rv_emit(table, rhs);
 
 			if(lhs->noderep == terminal) {
 				SymbolTable * stTable = table;
-				findSymbol(lhs->token.value, &stTable, &stIndex);
+				lookupSymbol(lhs->token.value, &stTable, &stIndex);
 				if(stIndex == -1) {
-					fprintf(stderr, "undefined variable: %s\n", lhs->token.value);
+					printf("undefined variable: %s\n", lhs->token.value);
 					return;
 				}
 				emit2("str",stTable->base, stTable->symbols[stIndex].offset);
@@ -413,9 +304,9 @@ void processOperator(SymbolTable *table, Node *ptr) {
 
 			if(lhs->noderep == terminal) {
 				SymbolTable * findTable = table;
-				findSymbol(lhs->token.value, &findTable, &stIndex);
+				lookupSymbol(lhs->token.value, &findTable, &stIndex);
 				if(stIndex == -1) {
-					fprintf(file,"undefined variable: %s\n", lhs->token.value);
+					printf("undefined variable: %s\n", lhs->token.value);
 					return;
 				}
 				emit2("str", findTable->base , findTable->symbols[stIndex].offset);
@@ -482,10 +373,10 @@ void processOperator(SymbolTable *table, Node *ptr) {
 				rv_emit(table,indexExp);
 
 			SymbolTable * findTable = table;
-			findSymbol(ptr->son->token.value, &findTable, &stIndex);
+			lookupSymbol(ptr->son->token.value, &findTable, &stIndex);
 
 			if(stIndex == -1) {
-				fprintf(file, "undefined variable: %s\n", ptr->son->token.value);
+				printf("undefined variable: %s\n", ptr->son->token.value);
 				return;
 			}
 
@@ -512,15 +403,14 @@ void processOperator(SymbolTable *table, Node *ptr) {
 				q = q->son;
 
 			if(!q || (q->token.number != IDENT)) {
-				fprintf(file,"increment/decrement operators error\n");
+				fprintf(file,"increment/decrement operators can not be applied in expression\n");
 				return;
 			}
 
-			findSymbol(q->token.value, &findTable, &stIndex);
-			
+			lookupSymbol(q->token.value, &findTable, &stIndex);
             if(stIndex == -1) return;
 			
-			if((flag_assigning == 1) && (ptr->token.number == POST_INC || ptr->token.number == POST_DEC))
+			if((assignFlag == 1) && (ptr->token.number == POST_INC || ptr->token.number == POST_DEC))
 				emit0("dup");
 
 			switch(ptr->token.number) {
@@ -530,26 +420,24 @@ void processOperator(SymbolTable *table, Node *ptr) {
 				case POST_DEC:	emit0("dec");	break;
 			}
 
-			if((flag_assigning == 1)&&(ptr->token.number == PRE_INC || ptr->token.number == PRE_DEC))
+			if((assignFlag == 1)&&(ptr->token.number == PRE_INC || ptr->token.number == PRE_DEC))
 				emit0("dup");
 
 			if(p->noderep == terminal) {
 				findTable = table;
-				findSymbol(p->token.value, &findTable, &stIndex);
+				lookupSymbol(p->token.value, &findTable, &stIndex);
 				if(stIndex == -1)
 					return;
 
 				emit2("str", findTable->base , findTable->symbols[stIndex].offset);
-			} 
-            else if(p->token.number == INDEX) {
+			} else if(p->token.number == INDEX) {
 				lvalue = 1;
 				processOperator(table, p);
 				lvalue = 0;
 				emit0("swp");
 				emit0("sti");
 			}
-            else
-				fprintf(file, "error increase/decrease\n");
+            else printf("error increase/decrease operators\n");
 			break;
 		}
 		case CALL:
@@ -563,10 +451,10 @@ void processOperator(SymbolTable *table, Node *ptr) {
             if(checkPredefined(table,p)) break;
 			
             functionName = p->token.value;
-			findSymbol(functionName, &findTable, &stIndex);
+			lookupSymbol(functionName, &findTable, &stIndex);
 			
 			if(stIndex == -1) {
-				fprintf(file, "%s: undefined function\n",functionName);
+				printf("%s: undefined function\n",functionName);
 				break;
 			}
 			noArguments = findTable->symbols[stIndex].width;
@@ -584,8 +472,10 @@ void processOperator(SymbolTable *table, Node *ptr) {
 				p = p->brother;
 			}
 
-			if(noArguments > 0) fprintf(file, "%s: too few actual arguments\n", functionName);
-			if(noArguments < 0) fprintf(file, "%s: too many actual arguments\n", functionName);
+			if(noArguments > 0) 
+				printf("%s: too few actual arguments\n", functionName);
+			if(noArguments < 0) 
+				printf("%s: too many actual arguments\n", functionName);
 
 			emitJump("call", ptr->son->token.value);
 			break;
@@ -595,7 +485,6 @@ void processOperator(SymbolTable *table, Node *ptr) {
 
 void processStatement(SymbolTable *table, Node *ptr) {
 	Node *p, *q;
-	char label1[LABEL_LEN] = {0}, label2[LABEL_LEN] = {0}, label3[LABEL_LEN] = {0}; 
 	char *startLabel, *endLabel;
 
 	switch(ptr->token.number) {
@@ -607,12 +496,9 @@ void processStatement(SymbolTable *table, Node *ptr) {
 				p = p->brother;
 			}
 			break;
-
 		case EXP_ST:
-			if(ptr->son != NULL)
-				processOperator(table, ptr->son);
+			if(ptr->son != NULL) processOperator(table, ptr->son);
 			break;
-
 		case RETURN_ST:
 			if (ptr->son != NULL) {
 				p = ptr->son;
@@ -620,43 +506,42 @@ void processStatement(SymbolTable *table, Node *ptr) {
 					processOperator(table, p);
 				else
 					rv_emit(table, p);
-
 				emit0("retv");
 			}
 			else
 				emit0("ret");
-			flag_returned = 1;
+			returnFlag = 1;
 			break;
-
 		case CONTINUE_ST:
 			findFlow(flowTable,LOOP_QUAL, &startLabel, &endLabel);
-
 			if(startLabel == 0) {
-				fprintf(file,"continue Error!");
+				printf("continue Error!");
 				return;
 			}
-
 			emitJump("ujp",startLabel);
 			break;
-		
-		case BREAK_ST: //일단 루프만 처리, 추후 switch지원
+		case BREAK_ST:
 			topFlow(flowTable, &startLabel, &endLabel);
 			if(startLabel == 0) {
-				fprintf(file,"break error!");
+				printf("break error!");
 				return;
 			}
 			emitJump("ujp",endLabel);
 			break;
-
 		case IF_ST:
-			genLabel(label1);
+		{
+			char label[LABEL_SIZE];
+
+			genLabel(label);
 			processCondition(table, ptr->son);
-			emitJump("fjp", label1);
+			emitJump("fjp", label);
 			processStatement(table, ptr->son->brother);
-			emitLabel(label1);
-			break;
-		
+			emitLabel(label);
+		}
+		break;
 		case IF_ELSE_ST:
+		{
+			char label1[LABEL_SIZE], label2[LABEL_SIZE]; 
 			genLabel(label1);
 			genLabel(label2);
 			processCondition(table, ptr->son);
@@ -666,8 +551,12 @@ void processStatement(SymbolTable *table, Node *ptr) {
 			emitLabel(label1);
 			processStatement(table, ptr->son->brother->brother);
 			emitLabel(label2);
-			break;
+		}
+		break;
 		case SWITCH_ST:
+		{
+			char label1[LABEL_SIZE], label2[LABEL_SIZE], label3[LABEL_SIZE];
+
 			genLabel(label2);
 			for(p = ptr->son->brother; p; p = p->brother) {
 				switch(p->token.number) {
@@ -694,55 +583,52 @@ void processStatement(SymbolTable *table, Node *ptr) {
 						emitLabel(label1);
 						for(q = p->son; q; q=q->brother) 
 							processStatement(table,q);
-
 						popFlow(flowTable);
 						emitLabel(label3);
 					break;
 				}
 			}
 			emitLabel(label2);
-			break;
-
+		}
+		break;
 		case FOR_ST:
+		{
+			char label1[LABEL_SIZE], label2[LABEL_SIZE];
+
 			for(p = ptr->son->son; p; p = p->brother) 
 				processOperator(table, p);
-			
 			genLabel(label1);
 			genLabel(label2);
 			pushFlow(flowTable, LOOP_QUAL, label1, label2);
-			
 			emitLabel(label1);
 			processCondition(table, ptr->son->brother->son);
 			emitJump("fjp", label2);
-
 			processStatement(table,ptr->son->brother->brother->brother);
-			
 			for(p = ptr->son->brother->brother->son; p; p= p->brother)
 				processOperator(table,p);
-			
 			emitJump("ujp",label1);
 			emitLabel(label2);
 			popFlow(flowTable);
-			break;
-
+		}
+		break;
 		case WHILE_ST:
+		{
+			char label1[LABEL_SIZE], label2[LABEL_SIZE];
+
 			genLabel(label1);
 			genLabel(label2);
 			pushFlow(flowTable, LOOP_QUAL, label1, label2);
-			
 			emitLabel(label1);
 			processCondition(table, ptr->son);
 			emitJump("fjp", label2);
-
 			processStatement(table, ptr->son->brother);
-
 			emitJump("ujp", label1);
 			emitLabel(label2);
 			popFlow(flowTable);
-			break;
-
+		}
+		break;
 		default:
-			fprintf(file, "not yet implements(statement)\n");
+			printf("not yet implements(statement)\n");
 			break;
 	}
 }
@@ -770,7 +656,7 @@ int checkPredefined(SymbolTable *table, Node *ptr) {
 				processOperator(table, p);
 			else {
 				findTable = table;
-				findSymbol(p->token.value, &findTable, &stIndex);
+				lookupSymbol(p->token.value, &findTable, &stIndex);
 				if(stIndex == -1)
 					return 0;
 				emit2("lda", findTable->base, findTable->symbols[stIndex].offset);
@@ -779,8 +665,8 @@ int checkPredefined(SymbolTable *table, Node *ptr) {
 			p = p->brother;
 		}
 
-		if(noArguments > 0) fprintf(file,"%s: too few actual arguments\n", functionName);
-		else if(noArguments < 0) fprintf(file,"%s: too many actual arguments\n", functionName);
+		if(noArguments > 0) printf("%s: too few actual arguments\n", functionName);
+		else if(noArguments < 0) printf("%s: too many actual arguments\n", functionName);
 
 		emitJump("call", functionName);
 		return 1;
@@ -794,7 +680,7 @@ int checkPredefined(SymbolTable *table, Node *ptr) {
 				processOperator(table, p);
 			else {
 				findTable = table;
-				findSymbol(p->token.value, &findTable, &stIndex);
+				lookupSymbol(p->token.value, &findTable, &stIndex);
 				if(stIndex == -1)
 					return 0;
 				emit2("lod", findTable->base, findTable->symbols[stIndex].offset);
@@ -803,8 +689,8 @@ int checkPredefined(SymbolTable *table, Node *ptr) {
 			p = p->brother;
 		}
 
-		if(noArguments > 0) fprintf(file,"%s: too few actual arguments\n", functionName);
-		else if(noArguments < 0) fprintf(file,"%s: too many actual arguments\n", functionName);
+		if(noArguments > 0) printf("%s: too few actual arguments\n", functionName);
+		else if(noArguments < 0) printf("%s: too many actual arguments\n", functionName);
 
 		emitJump("call", functionName);
 		return 1;

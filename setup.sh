@@ -37,7 +37,7 @@ if ! [ -d "$ucode"]; then
 fi
 
 cd ucode
-g++ -c ucodei.cpp
+g++ -c ucodei.cpp -w
 g++ -o ucodei ucodei.o
 mv ucodei ../..
 rm -rf ucodei.o
