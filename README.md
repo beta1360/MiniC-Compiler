@@ -1,6 +1,6 @@
 # MiniC-Compiler
 
- MiniC Compiler use flex & bison/yacc and C.
+ MiniC Compiler use flex & bison/yacc and C.(for tt3)
 
 ## The component of Compiler 
 
